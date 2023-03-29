@@ -14,11 +14,11 @@ settings = Dynaconf(
 
 SECRET_KEY = settings.get('SECRET_KEY', None)
 
+DATABASES = settings.get('DATABASES', None)
+
 DEBUG = settings.get('DEBUG', False)
 
 ALLOWED_HOSTS = settings.get('ALLOWED_HOSTS', '*')
 
 LANGUAGE_CODE = settings.get('LANGUAGE_CODE', 'en-us')
 TIME_ZONE = settings.get('TIME_ZONE', 'America/New_York')
-
-BASICAUTH_USERS = settings.get('BASICAUTH_USERS', None)
