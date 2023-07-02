@@ -9,6 +9,7 @@ ENV LC_ALL en_US.UTF-8
 
 ENV VIRTUAL_ENV /opt/astronomican_venv
 ENV PATH ${VIRTUAL_ENV}/bin:${PATH}
+ENV DJANGO_SETTINGS_MODULE astronomican.settings.production
 
 ENV PYTHONDONTWRITEBYTECODE 1
 
@@ -40,6 +41,8 @@ FROM base as builder
 COPY requirements.txt requirements.txt
 
 RUN set -eux; \
+    apt-get update; \
+    apt-get -y install --no-install-recommends pkg-config build-essential python3-dev default-libmysqlclient-dev; \
     python3 -m venv "${VIRTUAL_ENV}"; \
     pip install -r requirements.txt
 

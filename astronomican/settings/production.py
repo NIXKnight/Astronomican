@@ -3,6 +3,9 @@ from astronomican.settings.base import *
 from dynaconf import Dynaconf
 
 from os import environ
+from os.path import join as path_join
+
+STATIC_ROOT = path_join(BASE_DIR, '../static')
 
 ASTRONOMICAN_CONFIG = environ["ASTRONOMICAN_CONFIG"]
 

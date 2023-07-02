@@ -1,0 +1,45 @@
+---
+version: "3.9"
+services:
+  # Init container
+  init:
+    image: "astronomican"
+    container_name: "astronomican_init"
+    command: "sh -c 'python manage.py collectstatic --noinput --clear && python manage.py migrate --noinput'"
+    env_file:
+      - .env-local
+    volumes:
+      - "./:/opt/astronomican"
+      - "./config.yaml:/opt/astronomican/config.yaml"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  # Astronomican container
+  web:
+    image: "astronomican"
+    container_name: "astronomican_web"
+    ports:
+      - "127.0.0.1:8000:8000"
+    command: "sh -c 'python manage.py runserver 0.0.0.0:8000'"
+    env_file:
+      - .env-local
+    volumes:
+      - "./:/opt/astronomican"
+      - "./config.yaml:/opt/astronomican/config.yaml"
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      mariadb:
+        condition: service_healthy
+
+  # MariaDB container
+  mariadb:
+    container_name: "mariadb"
+    image: "mariadb:10.11.4-jammy"
+    env_file:
+      - .env-local
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
