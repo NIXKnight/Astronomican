@@ -1,0 +1,38 @@
+{
+  "Control-agent": {
+    "http-host": "0.0.0.0",
+    "http-port": 8002,
+
+    "authentication": {
+      "type": "basic",
+      "realm": "kea-control-agent",
+      "clients": [
+        {
+          "user": "admin",
+          "password": "1234"
+        }
+      ]
+    },
+
+    "control-sockets": {
+      "dhcp4": {
+        "socket-type": "unix",
+        "socket-name": "/run/kea/kea4-ctrl-socket"
+      }
+    },
+
+    "loggers": [
+      {
+        "name": "kea-ctrl-agent",
+        "output_options": [
+          {
+            "output": "stdout",
+            "pattern": "%-5p %m\n"
+          }
+        ],
+        "severity": "INFO",
+        "debuglevel": 0
+      }
+    ]
+  }
+}

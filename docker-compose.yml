@@ -22,8 +22,8 @@ services:
     image: "astronomican"
     container_name: "astronomican_web"
     ports:
-      - "127.0.0.1:8000:8000"
-    command: "sh -c 'python manage.py runserver 0.0.0.0:8000'"
+      - "127.0.0.1:8001:8001"
+    command: "sh -c 'python manage.py runserver 0.0.0.0:8001'"
     env_file:
       - ./docker-compose.d/.env-local
     volumes:
@@ -32,7 +32,7 @@ services:
     networks:
       - astronomican
     depends_on:
-      init:
+      astronomican_init:
         condition: service_completed_successfully
       mariadb:
         condition: service_healthy
@@ -54,7 +54,24 @@ services:
     container_name: "kea_dhcp"
     command: "/usr/sbin/kea-dhcp4 -c /etc/kea/kea-dhcp4.conf"
     volumes:
+      - "kea_socket:/run/kea"
       - "./examples/config/kea/kea-dhcp4.conf.example:/etc/kea/kea-dhcp4.conf"
+    networks:
+      - astronomican
+    depends_on:
+      kea_init:
+        condition: service_completed_successfully
+      mariadb:
+        condition: service_healthy
+
+  # Kea Control Agent container
+  kea-ctrl-agent:
+    image: "nixknight/kea:latest"
+    container_name: "kea_ctrl_agent"
+    command: "/usr/sbin/kea-ctrl-agent -c /etc/kea/kea-ctrl-agent.conf"
+    volumes:
+      - "kea_socket:/run/kea"
+      - "./examples/config/kea/kea-ctrl-agent.conf.example:/etc/kea/kea-ctrl-agent.conf"
     networks:
       - astronomican
     depends_on:
@@ -82,3 +99,6 @@ networks:
   astronomican:
     name: astronomican
     external: true
+
+volumes:
+  kea_socket:
