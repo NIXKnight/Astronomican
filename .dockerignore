@@ -1,0 +1,7 @@
+.git
+.gitignore
+.env-local
+Dockerfile
+docker-compose.yml
+config.yaml
+config.yaml.example

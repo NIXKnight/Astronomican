@@ -1,0 +1,17 @@
+SECRET_KEY: "super_secure_key"
+DATABASES:
+  default:
+    ATOMIC_REQUESTS: true
+    CONN_MAX_AGE: 0
+    ENGINE: django.db.backends.mysql
+    HOST: mariadb
+    NAME: astronomican
+    OPTIONS:
+      isolation_level: read committed
+    PASSWORD: astronomican
+    PORT: '3306'
+    USER: astronomican
+DEBUG: True
+ALLOWED_HOSTS: ['*']
+LANGUAGE_CODE: "en-us"
+TIME_ZONE: "Asia/Karachi"
