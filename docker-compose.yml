@@ -2,33 +2,63 @@
 version: "3.9"
 services:
   # Init container
-  init:
+  astronomican_init:
     image: "astronomican"
     container_name: "astronomican_init"
     command: "sh -c 'python manage.py collectstatic --noinput --clear && python manage.py migrate --noinput'"
     env_file:
-      - .env-local
+      - ./docker-compose.d/.env-local
     volumes:
       - "./:/opt/astronomican"
       - "./config.yaml:/opt/astronomican/config.yaml"
+    networks:
+      - astronomican
     depends_on:
       mariadb:
         condition: service_healthy
 
   # Astronomican container
-  web:
+  astronomican:
     image: "astronomican"
     container_name: "astronomican_web"
     ports:
       - "127.0.0.1:8000:8000"
     command: "sh -c 'python manage.py runserver 0.0.0.0:8000'"
     env_file:
-      - .env-local
+      - ./docker-compose.d/.env-local
     volumes:
       - "./:/opt/astronomican"
       - "./config.yaml:/opt/astronomican/config.yaml"
+    networks:
+      - astronomican
     depends_on:
       init:
+        condition: service_completed_successfully
+      mariadb:
+        condition: service_healthy
+
+  # Kea DHCP container
+  kea_init:
+    image: "nixknight/kea:latest"
+    container_name: "kea_init"
+    command: "/usr/sbin/kea-admin db-init mysql -h mariadb -u kea -p kea -n kea"
+    networks:
+      - astronomican
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  # Kea DHCP container
+  kea:
+    image: "nixknight/kea:latest"
+    container_name: "kea_dhcp"
+    command: "/usr/sbin/kea-dhcp4 -c /etc/kea/kea-dhcp4.conf"
+    volumes:
+      - "./examples/config/kea/kea-dhcp4.conf.example:/etc/kea/kea-dhcp4.conf"
+    networks:
+      - astronomican
+    depends_on:
+      kea_init:
         condition: service_completed_successfully
       mariadb:
         condition: service_healthy
@@ -38,8 +68,17 @@ services:
     container_name: "mariadb"
     image: "mariadb:10.11.4-jammy"
     env_file:
-      - .env-local
+      - ./docker-compose.d/.env-local
+    volumes:
+      - "./docker-compose.d/mariadb-init:/docker-entrypoint-initdb.d"
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       timeout: 20s
       retries: 10
+    networks:
+      - astronomican
+
+networks:
+  astronomican:
+    name: astronomican
+    external: true

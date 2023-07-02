@@ -1,0 +1,31 @@
+{
+  "Dhcp4": {
+    "interfaces-config": {
+      "interfaces": [ "eth0" ]
+    },
+    "lease-database": {
+      "type": "mysql",
+      "name": "kea",
+      "user": "kea",
+      "password": "kea",
+      "host": "mariadb",
+      "port": 3306
+    },
+    "subnet4": [
+      {
+        "subnet": "192.0.2.0/24",
+        "pools": [ { "pool": "192.0.2.1 - 192.0.2.200" } ],
+        "option-data": [
+          {
+            "name": "routers",
+            "data": "192.0.2.1"
+          },
+          {
+            "name": "domain-name-servers",
+            "data": "192.0.2.1, 192.0.2.2"
+          }
+        ]
+      }
+    ]
+  }
+}
