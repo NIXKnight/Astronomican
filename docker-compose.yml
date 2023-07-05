@@ -1,4 +1,6 @@
 ---
+# This docker-compose file is written for development purposes.
+# It is not recommended to use this file for production purposes without any changes.
 version: "3.9"
 services:
   # Init container
@@ -18,7 +20,7 @@ services:
         condition: service_healthy
 
   # Astronomican container
-  astronomican:
+  astronomican_web:
     image: "astronomican"
     container_name: "astronomican_web"
     ports:
@@ -36,12 +38,17 @@ services:
         condition: service_completed_successfully
       mariadb:
         condition: service_healthy
+      kea_ctrl_agent:
+        condition: service_healthy
 
   # Kea DHCP container
   kea_init:
     image: "nixknight/kea:latest"
     container_name: "kea_init"
-    command: "/usr/sbin/kea-admin db-init mysql -h mariadb -u kea -p kea -n kea"
+    command: "/tmp/kea-init/init.sh"
+    user: "_kea"
+    volumes:
+      - "./docker-compose.d/kea-init:/tmp/kea-init"
     networks:
       - astronomican
     depends_on:
@@ -49,13 +56,19 @@ services:
         condition: service_healthy
 
   # Kea DHCP container
-  kea:
+  kea_dhcp:
     image: "nixknight/kea:latest"
     container_name: "kea_dhcp"
-    command: "/usr/sbin/kea-dhcp4 -c /etc/kea/kea-dhcp4.conf"
+    command: "/usr/local/sbin/kea-dhcp4 -c /usr/local/etc/kea/kea-dhcp4.conf"
+    environment:
+      - KEA_LOCKFILE_DIR=/usr/local/var/run/kea/kea-dhcp4-server
     volumes:
-      - "kea_socket:/run/kea"
-      - "./examples/config/kea/kea-dhcp4.conf.example:/etc/kea/kea-dhcp4.conf"
+      - "kea_dhcp_server:/usr/local/var/run/kea/kea-dhcp4-server"
+      - "./examples/config/kea/kea-dhcp4.conf.example:/usr/local/etc/kea/kea-dhcp4.conf"
+    healthcheck:
+      test: ["CMD", "echo", "'{\"command\": \"status-get\"}'", "|", "socat", "/usr/local/var/run/kea/kea-dhcp4-server/kea4-ctrl-socket", "-,ignoreeof"]
+      timeout: 20s
+      retries: 10
     networks:
       - astronomican
     depends_on:
@@ -65,19 +78,26 @@ services:
         condition: service_healthy
 
   # Kea Control Agent container
-  kea-ctrl-agent:
+  kea_ctrl_agent:
     image: "nixknight/kea:latest"
     container_name: "kea_ctrl_agent"
-    command: "/usr/sbin/kea-ctrl-agent -c /etc/kea/kea-ctrl-agent.conf"
+    command: "/usr/local/sbin/kea-ctrl-agent -c /usr/local/etc/kea/kea-ctrl-agent.conf"
+    environment:
+      - KEA_LOCKFILE_DIR=/usr/local/var/run/kea/kea-ctrl-agent
     volumes:
-      - "kea_socket:/run/kea"
-      - "./examples/config/kea/kea-ctrl-agent.conf.example:/etc/kea/kea-ctrl-agent.conf"
+      - "kea_dhcp_server:/usr/local/var/run/kea/kea-dhcp4-server"
+      - "kea_ctrl_agent:/usr/local/var/run/kea/kea-ctrl-agent"
+      - "./examples/config/kea/kea-ctrl-agent.conf.example:/usr/local/etc/kea/kea-ctrl-agent.conf"
+    ports:
+      - "127.0.0.1:8002:8002"
+    healthcheck:
+      test: ["CMD", "curl", "-X", "POST", "-H", "\"Content-Type: application/json\"", "-d", "'{ \"command\": \"status-get\", \"service\": [ \"dhcp4\" ] }'", "-u", "\"admin:1234\"", "http://127.0.0.1:8002/"]
+      timeout: 20s
+      retries: 10
     networks:
       - astronomican
     depends_on:
-      kea_init:
-        condition: service_completed_successfully
-      mariadb:
+      kea_dhcp:
         condition: service_healthy
 
   # MariaDB container
@@ -87,7 +107,10 @@ services:
     env_file:
       - ./docker-compose.d/.env-local
     volumes:
+      - "mariadb:/var/lib/mysql"
       - "./docker-compose.d/mariadb-init:/docker-entrypoint-initdb.d"
+    ports:
+      - "127.0.0.1:3307:3306"
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       timeout: 20s
@@ -98,7 +121,8 @@ services:
 networks:
   astronomican:
     name: astronomican
-    external: true
 
 volumes:
-  kea_socket:
+  kea_dhcp_server:
+  kea_ctrl_agent:
+  mariadb:

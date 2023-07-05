@@ -17,7 +17,7 @@
     "control-sockets": {
       "dhcp4": {
         "socket-type": "unix",
-        "socket-name": "/run/kea/kea4-ctrl-socket"
+        "socket-name": "/usr/local/var/run/kea/kea-dhcp4-server/kea4-ctrl-socket"
       }
     },
 
