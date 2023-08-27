@@ -31,6 +31,7 @@ RUN set -eux; \
       python3 \
       python3-venv \
       python3-pip \
+      libmariadb3 \
       locales; \
     apt-get clean all; \
     rm -rf /var/lib/apt/*
@@ -47,7 +48,7 @@ RUN set -eux; \
     pip install -r requirements.txt
 
 
-FROM builder as production
+FROM base as production
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 COPY . .

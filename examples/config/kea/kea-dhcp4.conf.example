@@ -1,0 +1,62 @@
+{
+  "Dhcp4": {
+    "multi-threading": {
+      "enable-multi-threading": false
+    },
+    "interfaces-config": {
+      "interfaces": ["eno1"]
+    },
+    "control-socket": {
+      "socket-type": "unix",
+      "socket-name": "/usr/local/var/run/kea/kea-dhcp4-server/kea4-ctrl-socket"
+    },
+    "hooks-libraries": [
+      {
+        "library": "/usr/local/lib/kea/hooks/libkea_python.so",
+        "parameters": {
+          "libpython": "libpython3.11.so.1",
+          "module": "/usr/local/lib/kea/keahook.py"
+        }
+      }
+    ],
+    "host-reservation-identifiers": [
+      "circuit-id",
+      "hw-address",
+      "duid",
+      "client-id"
+    ],
+    "lease-database": {
+      "type": "memfile",
+      "persist": false
+    },
+    "hosts-database": {
+      "type": "mysql",
+      "name": "kea",
+      "user": "kea",
+      "password": "kea",
+      "host": "mariadb",
+      "port": 3306
+    },
+    "subnet4": [
+      {
+        "id": 1,
+        "subnet": "192.168.2.0/24",
+        "pools": [
+          {
+            "pool": "192.168.2.1 - 192.168.2.200"
+          }
+        ],
+        "option-data": [
+          {
+            "name": "routers",
+            "data": "192.168.2.1"
+          },
+          {
+            "name": "domain-name-servers",
+            "data": "192.168.2.1, 192.168.2.2"
+          }
+        ]
+      }
+    ]
+  }
+}
