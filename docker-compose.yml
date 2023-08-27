@@ -13,8 +13,9 @@ services:
     volumes:
       - "./:/opt/astronomican"
       - "./config.yaml:/opt/astronomican/config.yaml"
-    networks:
-      - astronomican
+    network_mode: host
+    extra_hosts:
+      - "mariadb:127.0.0.1"
     depends_on:
       mariadb:
         condition: service_healthy
@@ -31,8 +32,9 @@ services:
     volumes:
       - "./:/opt/astronomican"
       - "./config.yaml:/opt/astronomican/config.yaml"
-    networks:
-      - astronomican
+    network_mode: host
+    extra_hosts:
+      - "mariadb:127.0.0.1"
     depends_on:
       astronomican_init:
         condition: service_completed_successfully
@@ -49,8 +51,9 @@ services:
     user: "_kea"
     volumes:
       - "./docker-compose.d/kea-init:/tmp/kea-init"
-    networks:
-      - astronomican
+    network_mode: host
+    extra_hosts:
+      - "mariadb:127.0.0.1"
     depends_on:
       mariadb:
         condition: service_healthy
@@ -69,8 +72,9 @@ services:
       test: ["CMD", "echo", "'{\"command\": \"status-get\"}'", "|", "socat", "/usr/local/var/run/kea/kea-dhcp4-server/kea4-ctrl-socket", "-,ignoreeof"]
       timeout: 20s
       retries: 10
-    networks:
-      - astronomican
+    network_mode: host
+    extra_hosts:
+      - "mariadb:127.0.0.1"
     depends_on:
       kea_init:
         condition: service_completed_successfully
@@ -94,8 +98,7 @@ services:
       test: ["CMD", "curl", "-X", "POST", "-H", "\"Content-Type: application/json\"", "-d", "'{ \"command\": \"status-get\", \"service\": [ \"dhcp4\" ] }'", "-u", "\"admin:1234\"", "http://127.0.0.1:8002/"]
       timeout: 20s
       retries: 10
-    networks:
-      - astronomican
+    network_mode: host
     depends_on:
       kea_dhcp:
         condition: service_healthy
@@ -115,12 +118,14 @@ services:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
       timeout: 20s
       retries: 10
-    networks:
-      - astronomican
+    network_mode: host
 
-networks:
-  astronomican:
-    name: astronomican
+  # DHCP client test container
+  dhcp-client-test:
+    container_name: "dhcp_test"
+    image: "debian:bookworm-slim"
+    command: "sleep 99d"
+    network_mode: host
 
 volumes:
   kea_dhcp_server:

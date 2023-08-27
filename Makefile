@@ -21,3 +21,5 @@ kea-dhcp-shell:
 	docker compose exec kea_dhcp /bin/bash
 kea-ctrl-agent-shell:
 	docker compose exec kea_ctrl_agent /bin/bash
+test-dhcp:
+	docker compose exec dhcp-client-test /bin/bash -c "apt-get update && apt-get install -y dhcpcd && dhcpcd -T eno1"
